@@ -1,15 +1,16 @@
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-# BlenderBot conversational model
-
-model_name = "facebook/blenderbot-400M-distill"
+# FLAN-T5 Base model
+model_name = "google/flan-t5-base"
 
 print("Loading model! Please wait a few seconds...")
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
-print("Chatbot ready! (type 'exit' to quit)\n")
+model.eval()
+
+print("AI Assistant ready! (type 'exit' to quit)\n")
 
 conversation_history = []
 
@@ -20,12 +21,21 @@ while True:
         print("Goodbye!")
         break
 
-    # Keep only the latest conversation turns
-    conversation_history = conversation_history[-6:]
+    # Keep recent conversation history
+    conversation_history = conversation_history[-10:]
 
     history_string = "\n".join(conversation_history)
 
-    prompt = history_string + f"\nUser: {user_input}\nBot:"
+    prompt = f"""
+You are a helpful, knowledgeable, and friendly AI assistant.
+
+Previous Conversation:
+{history_string}
+
+User Question: {user_input}
+
+Answer:
+"""
 
     inputs = tokenizer(
         prompt,
@@ -36,12 +46,8 @@ while True:
 
     outputs = model.generate(
         **inputs,
-        max_new_tokens=60,
-        no_repeat_ngram_size=3,
-        repetition_penalty=1.3,
-        do_sample=True,
-        temperature=0.7,
-        top_p=0.9
+        max_new_tokens=100,
+        do_sample=False
     )
 
     response = tokenizer.decode(
@@ -53,7 +59,3 @@ while True:
 
     conversation_history.append(f"User: {user_input}")
     conversation_history.append(f"Bot: {response}")
-
-
-
-
